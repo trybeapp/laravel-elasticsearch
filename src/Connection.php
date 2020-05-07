@@ -412,7 +412,7 @@ class Connection extends BaseConnection
      *
      * @return \Illuminate\Database\Query\Builder
      */
-    public function table($table)
+    public function table($table, $as = null)
     {
         //
     }
