@@ -7,6 +7,7 @@ use DesignMyNight\Elasticsearch\Console\Mappings\Traits\UpdatesAlias;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Symfony\Component\Finder\SplFileInfo;
 
 /**
@@ -150,15 +151,15 @@ class MappingMigrateCommand extends Command
     protected function putMapping(SplFileInfo $mapping):void
     {
         $index = $this->getMappingName($mapping->getFileName(), true);
-        $mappings = json_decode($mapping->getContents(), true);
+        $mapping = json_decode($mapping->getContents(), true);
 
-        if (str_contains($index, 'update')) {
-            $this->updateIndex($index, $mappings['mappings']);
+        if (Str::contains($index, 'update')) {
+            $this->updateIndex($index, $mapping);
 
             return;
         }
 
-        $this->createIndex($index, $mappings);
+        $this->createIndex($index, $mapping);
     }
 
     /**
@@ -206,7 +207,7 @@ class MappingMigrateCommand extends Command
 
             $this->info("Migrated mapping: {$index}");
 
-            if (!str_contains($index, 'update') && $this->option('index')) {
+            if (!Str::contains($index, 'update') && $this->option('index')) {
                 $this->index($index);
 
                 if (in_array($aliasName, $createdAliases) || $this->option('swap')) {
@@ -226,14 +227,11 @@ class MappingMigrateCommand extends Command
 
         $this->line("Updating index mapping $index");
 
-        foreach ($mappings as $type => $body) {
-            $this->client->indices()
-              ->putMapping([
-                'index' => $index,
-                'type'  => $type,
-                'body'  => $body,
-              ]);
-        }
+        $this->client->indices()
+            ->putMapping([
+            'index' => $index,
+            'body'  => $mappings,
+        ]);
 
         $this->info("Updated index mapping $index");
     }
