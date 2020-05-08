@@ -85,11 +85,17 @@ class MappingMakeCommand extends Command
     protected function getTemplate():string
     {
         if ($template = $this->option('template')) {
-            if (!str_contains($template, '.json')) {
+            if (!Str::contains($template, '.json')) {
                 $template .= '.json';
             }
 
             return base_path("database/mappings/{$template}");
+        }
+
+        if ($this->option('update')) {
+            return base_path(
+                'vendor/designmynight/laravel-elasticsearch/src/Console/Mappings/stubs/update-mapping.stub'
+            );
         }
 
         return base_path('vendor/designmynight/laravel-elasticsearch/src/Console/Mappings/stubs/mapping.stub');
