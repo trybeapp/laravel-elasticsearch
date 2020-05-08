@@ -3,6 +3,7 @@
 namespace DesignMyNight\Elasticsearch\Console\Mappings\Traits;
 
 use Elasticsearch\Client;
+use Illuminate\Support\Str;
 
 /**
  * Trait UpdatesAlias
@@ -27,7 +28,7 @@ trait UpdatesAlias
         }
 
         $aliases = $aliases->filter(function (array $item) use ($alias):bool {
-            return str_contains($item['index'], $alias);
+            return Str::contains($item['index'], $alias);
         })->sortByDesc('index');
 
         if ($aliases->count() === 1) {
@@ -65,7 +66,7 @@ trait UpdatesAlias
         }
 
         $relevant = $indices->filter(function (array $item) use ($alias):bool {
-            return str_contains($item['index'], $alias);
+            return Str::contains($item['index'], $alias);
         })->sortByDesc('index');
 
         return $this->choice('Which index would you like to use?', $relevant->pluck('index')->toArray(), 0);

@@ -5,6 +5,7 @@ namespace DesignMyNight\Elasticsearch;
 use DateTime;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar as BaseGrammar;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use MongoDB\BSON\ObjectID;
 
@@ -792,7 +793,7 @@ class QueryGrammar extends BaseGrammar
     {
         $key = $aggregation['key'];
 
-        $method = 'compile' . ucfirst(camel_case($aggregation['type'])) . 'Aggregation';
+        $method = 'compile' . ucfirst(Str::camel($aggregation['type'])) . 'Aggregation';
 
         $compiled = [
             $key => $this->$method($aggregation)

@@ -6,6 +6,7 @@ use DesignMyNight\Elasticsearch\Console\Mappings\Traits\HasConnection;
 use DesignMyNight\Elasticsearch\Console\Mappings\Traits\UpdatesAlias;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Class IndexRollbackCommand
@@ -86,7 +87,7 @@ class IndexRollbackCommand extends Command
     {
         $suffix = config('database.connections.elasticsearch.suffix');
 
-        if (ends_with($mapping, $suffix)) {
+        if (Str::endsWith($mapping, $suffix)) {
             return $mapping;
         }
 
