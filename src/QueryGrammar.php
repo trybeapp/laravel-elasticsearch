@@ -1079,6 +1079,23 @@ class QueryGrammar extends BaseGrammar
     {
         $params = [];
 
+        // Since every insert gets treated like a batch insert, we will have to detect
+        // if the user is inserting a single document or an array of documents.
+        $batch = true;
+
+        foreach ($values as $value) {
+            // As soon as we find a value that is not an array we assume the user is
+            // inserting a single document.
+            if (!is_array($value)) {
+                $batch = false;
+                break;
+            }
+        }
+
+        if (!$batch) {
+            $values = [$values];
+        }
+
         foreach ($values as $doc) {
             if (isset($doc['child_documents'])) {
                 foreach ($doc['child_documents'] as $childDoc) {
