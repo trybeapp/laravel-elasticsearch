@@ -1115,27 +1115,28 @@ class QueryGrammar extends BaseGrammar
 
             $index = [
                 '_index' => $builder->from . $this->indexSuffix,
-                '_id'    => $doc['id'],
+                '_id'    => $doc['id'] ?? null,
             ];
 
-            if(isset($doc['_routing'])) {
+            if (isset($doc['_routing'])) {
                 $index['routing'] = $doc['_routing'];
                 unset($doc['_routing']);
-            }
-            else if($routing = $builder->getRouting()) {
+            } elseif ($routing = $builder->getRouting()) {
                 $index['routing'] = $routing;
             }
 
             if ($parentId = $builder->getParentId()) {
                 $index['parent'] = $parentId;
-            } else if (isset($doc['_parent'])) {
+            } elseif (isset($doc['_parent'])) {
                 $index['parent'] = $doc['_parent'];
                 unset($doc['_parent']);
             }
 
             $params['body'][] = ['index' => $index];
 
-            unset($doc['id']);
+            if (isset($doc['id'])) {
+                unset($doc['id']);
+            }
 
             $params['body'][] = $doc;
         }
