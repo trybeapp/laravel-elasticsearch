@@ -36,6 +36,22 @@ class QueryProcessor extends BaseProcessor
     }
 
     /**
+     * Process an  "insert get ID" query.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @param  string  $sql
+     * @param  array  $values
+     * @param  string|null  $sequence
+     * @return int
+     */
+    public function processInsertGetId(Builder $query, $sql, $values, $sequence = null)
+    {
+        $response = $query->getConnection()->insert($sql);
+
+        return $response['items'][0]['index']['_id'];
+    }
+
+    /**
      * Create a document from the given result
      *
      * @param  Builder $query
