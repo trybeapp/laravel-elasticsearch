@@ -517,8 +517,8 @@ class QueryBuilder extends BaseBuilder
             $this->aggregations[] = [
                 'key' => $aggregation->getKey(),
                 'type' => $aggregation->getType(),
-                'args' => $aggregation->getArguments(),
-                'aggregations' => $aggregation($this->newQuery()),
+                'args' => $aggregation->getArguments($this->newQuery()),
+                'aggregations' => $aggregation->applySubAggregations($this->newQuery()),
             ];
 
             return $this;
