@@ -736,6 +736,20 @@ class QueryBuilder extends BaseBuilder
     /**
      * @inheritdoc
      */
+    public function update(array $values): bool
+    {
+        if (isset($values['_id'])) {
+            unset($values['_id']);
+        }
+
+        $values['id'] = $this->wheres[0]['value'];
+
+        return $this->insert($values);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function delete($id = null): bool
     {
         // If an ID is passed to the method, we will set the where clause to check the
