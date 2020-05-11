@@ -123,7 +123,7 @@ abstract class Aggregation
             $this->getKey(),
             $this->getType(),
             $this->getArguments($builder->newQuery()),
-            $this->applySubAggregation($builder->newQuery())
+            $this->applySubAggregations($builder->newQuery())
         );
     }
 }
