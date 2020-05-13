@@ -18,7 +18,7 @@ class QueryBuilder extends BaseBuilder
 {
     public $type;
 
-    public $filters;
+    public $filters = [];
 
     public $postFilters;
 
