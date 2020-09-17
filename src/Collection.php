@@ -12,7 +12,9 @@ class Collection extends BaseCollection
             return;
         }
 
-        $query = $this->first()->newQueryWithoutScopes();
+        $instance = $this->first();
+        $instance->setConnection($instance->getElasticsearchConnectionName());
+        $query = $instance->newQueryWithoutScopes();
 
         $docs = $this->map(function ($model, $i) {
             return $model->onSearchConnection(
