@@ -4,6 +4,7 @@ namespace DesignMyNight\Elasticsearch;
 
 use Closure;
 use Illuminate\Database\Query\Builder as BaseBuilder;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
 /**
@@ -710,7 +711,7 @@ class QueryBuilder extends BaseBuilder
     /**
      * Get a generator for the given query.
      *
-     * @return \Generator
+     * @return LazyCollection
      */
     public function cursor()
     {
@@ -718,9 +719,11 @@ class QueryBuilder extends BaseBuilder
             $this->columns = ['*'];
         }
 
-        foreach ($this->connection->cursor($this->toCompiledQuery()) as $document) {
-            yield $this->processor->documentFromResult($this, $document);
-        }
+        return new LazyCollection(function () {
+            foreach ($this->connection->cursor($this->toCompiledQuery()) as $document) {
+                yield $this->processor->documentFromResult($this, $document);
+            }
+        });
     }
 
     /**

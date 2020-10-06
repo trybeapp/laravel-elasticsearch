@@ -2,12 +2,12 @@
 
 namespace DesignMyNight\Elasticsearch;
 
-use Generator;
 use Illuminate\Database\Eloquent\Builder as BaseBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 
 /**
  * Class EloquentBuilder
@@ -106,13 +106,15 @@ class EloquentBuilder extends BaseBuilder
     /**
      * Get a generator for the given query.
      *
-     * @return Generator
+     * @return LazyCollection
      */
-    public function cursor()
+    public function cursor(): LazyCollection
     {
-        foreach ($this->applyScopes()->query->cursor() as $record) {
-            yield $this->model->newFromBuilder($record);
-        }
+        return new LazyCollection(function () {
+            foreach ($this->applyScopes()->query->cursor() as $record) {
+                yield $this->model->newFromBuilder($record);
+            }
+        });
     }
 
     /**
