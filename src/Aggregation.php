@@ -44,9 +44,9 @@ abstract class Aggregation
     protected $key;
 
     /**
-     * @var Aggregation
+     * @var Aggregation[]
      */
-    protected $subAggregation;
+    protected $subAggregations = [];
 
     /**
      * @param string $key
@@ -89,28 +89,36 @@ abstract class Aggregation
      */
     public function setSubAggregation($subAggregation): self
     {
-        $this->subAggregation = $subAggregation;
+        $this->subAggregations = [$subAggregation];
+
+        return $this;
+    }
+
+    /**
+     * @return self
+     */
+    public function addSubAggregation($subAggregation): self
+    {
+        $this->subAggregations[] = $subAggregation;
 
         return $this;
     }
 
     /**
      * @param QueryBuilder $builder
-     * @return QueryBuilder|null
+     * @return QueryBuilder
      */
     public function applySubAggregations(QueryBuilder $builder): ?QueryBuilder
     {
-        if (isset($this->subAggregation)) {
-            if ($this->subAggregation instanceof Aggregation) {
-                $this->subAggregation->apply($builder);
-            } elseif (is_callable($this->subAggregation)) {
-                call_user_func($this->subAggregation, $builder);
+        foreach ($this->subAggregations as $subAggregation) {
+            if ($subAggregation instanceof Aggregation) {
+                $subAggregation->apply($builder);
+            } elseif (is_callable($subAggregation)) {
+                call_user_func($subAggregation, $builder);
             }
-
-            return $builder;
         }
 
-        return null;
+        return $builder;
     }
 
     /**
