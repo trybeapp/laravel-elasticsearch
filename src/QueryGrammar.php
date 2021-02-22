@@ -78,7 +78,7 @@ class QueryGrammar extends BaseGrammar
      * @param  Builder  $builder
      * @return array
      */
-    protected function compileWheres(Builder $builder): array
+    public function compileWheres(Builder $builder): array
     {
         $queryParts = [
             'query' => 'wheres',
