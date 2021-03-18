@@ -310,7 +310,9 @@ class Connection extends BaseConnection
         while (!$limit || $numResults < $limit) {
             // Execute a Scroll request
             $results = $this->connection->scroll([
-                'scroll_id' => $scrollId,
+                'body' => [
+                    'scroll_id' => $scrollId,
+                ],
                 'scroll' => $scrollTimeout,
             ]);
 
