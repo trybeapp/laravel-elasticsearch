@@ -65,10 +65,6 @@ class QueryGrammar extends BaseGrammar
             unset($params['body']['query']);
         }
 
-        // print "<pre>";
-        // print str_replace('    ', '  ', json_encode($params, JSON_PRETTY_PRINT));
-        // exit;
-
         return $params;
     }
 

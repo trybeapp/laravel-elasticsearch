@@ -248,6 +248,33 @@ class Connection extends BaseConnection
     }
 
     /**
+     * @return array
+     */
+    public function getQueryLogJson(): array
+    {
+        return array_map(
+            function ($log) {
+                return str_replace('    ', '  ', json_encode($log['query']['body'], JSON_PRETTY_PRINT));
+            },
+            $this->getQueryLog()
+        );
+    }
+
+    /**
+     * @return void
+     */
+    public function dumpQueryLogJson(): void
+    {
+        print '<pre>';
+
+        foreach ($this->getQueryLogJson() as $query) {
+            print $query . "\n\n";
+        }
+
+        print '</pre>';
+    }
+
+    /**
      * Prepare the query bindings for execution.
      *
      * @param array $bindings
