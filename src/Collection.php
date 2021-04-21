@@ -6,10 +6,18 @@ use Illuminate\Database\Eloquent\Collection as BaseCollection;
 
 class Collection extends BaseCollection
 {
-    public function addToIndex()
+    /**
+     * @var array
+     */
+    protected $addToIndexResult;
+
+    /**
+     * @return bool
+     */
+    public function addToIndex(): bool
     {
         if ($this->isEmpty()) {
-            return;
+            return true;
         }
 
         $instance = $this->first();
@@ -25,8 +33,18 @@ class Collection extends BaseCollection
 
         $success = $query->insert($docs->all());
 
+        $this->addToIndexResult = $query->getQuery()->getInsertResult();
+
         unset($docs);
 
         return $success;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getAddToIndexResult(): ?array
+    {
+        return $this->addToIndexResult;
     }
 }

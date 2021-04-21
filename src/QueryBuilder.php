@@ -38,6 +38,8 @@ class QueryBuilder extends BaseBuilder
 
     protected $routing;
 
+    protected $insertResult;
+
     /**
      * All of the supported clause operators.
      *
@@ -731,9 +733,9 @@ class QueryBuilder extends BaseBuilder
      */
     public function insert(array $values): bool
     {
-        $result = $this->connection->insert($this->grammar->compileInsert($this, $values));
+        $this->insertResult = $this->connection->insert($this->grammar->compileInsert($this, $values));
 
-        return empty($result['errors']);
+        return empty($this->insertResult['errors']);
     }
 
     /**
@@ -767,6 +769,11 @@ class QueryBuilder extends BaseBuilder
         return !empty($result['found']);
     }
 
+    /**
+     * @param mixed $method
+     * @param mixed $parameters
+     * @return void
+     */
     public function __call($method, $parameters)
     {
         if (Str::startsWith($method, 'filterWhere')) {
@@ -774,6 +781,14 @@ class QueryBuilder extends BaseBuilder
         }
 
         return parent::__call($method, $parameters);
+    }
+
+    /**
+     * @return array
+     */
+    public function getInsertResult(): array
+    {
+        return array_column($this->insertResult['items'], 'index');
     }
 
     /**
