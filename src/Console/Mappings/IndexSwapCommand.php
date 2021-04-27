@@ -18,7 +18,10 @@ class IndexSwapCommand extends Command
     protected $description = 'Swap Elasticsearch alias';
 
     /** @var string $signature */
-    protected $signature = 'index:swap {alias? : Name of alias to be updated.} {index? : Name of index to be updated to.}';
+    protected $signature = 'index:swap
+        {alias? : Name of alias to be updated.}
+        {index? : Name of index to be updated to.}
+        {--force : Force the operation to run when in production}';
 
     /**
      * Execute the console command.
