@@ -997,12 +997,19 @@ class QueryGrammar extends BaseGrammar
     {
         $metric = $aggregation['type'];
 
-        $field = is_array($aggregation['args']) ? $aggregation['args']['field'] : $aggregation['args'];
+        if (is_array($aggregation['args'])) {
+            $args = array_filter([
+                'field' => $aggregation['args']['field'] ?? null,
+                'script' => $aggregation['args']['script'] ?? null,
+            ]);
+        } else {
+            $args = [
+                'field' => $aggregation['args'],
+            ];
+        }
 
         return [
-            $metric => [
-                'field' => $field
-            ]
+            $metric => $args,
         ];
     }
 
