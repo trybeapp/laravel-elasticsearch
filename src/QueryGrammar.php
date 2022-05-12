@@ -514,19 +514,17 @@ class QueryGrammar extends BaseGrammar
                 'match' => [
                     $field => [
                         'query' => $where['value'],
-                    ]
+                    ],
                 ],
             ];
         }
 
-        if (! empty($where['options']['fuzziness'])) {
-            $matchType = array_keys($query)[0];
+        $matchType = array_keys($query)[0];
 
-            if ($matchType === 'multi_match') {
-                $query[$matchType]['fuzziness'] = $where['options']['fuzziness'];
-            } else {
-                $query[$matchType][$field]['fuzziness'] = $where['options']['fuzziness'];
-            }
+        if (! empty($where['options']['fuzziness']) && $matchType === 'multi_match') {
+            $query[$matchType]['fuzziness'] = $where['options']['fuzziness'];
+        } elseif (! empty($where['options']['fuzziness'])) {
+            $query[$matchType][$field]['fuzziness'] = $where['options']['fuzziness'];
         }
 
         if (! empty($where['options']['constant_score'])) {
@@ -535,6 +533,17 @@ class QueryGrammar extends BaseGrammar
                     'query' => $query,
                 ],
             ];
+        }
+
+        $otherOptions = array_diff_key(
+            $where['options'],
+            array_flip(['fields', 'fuzziness', 'constant_score'])
+        );
+
+        if ($matchType === 'multi_match') {
+            $query['multi_match'] = $query['multi_match'] + $otherOptions;
+        } else {
+            $query[$matchType][$field] = $query[$matchType][$field] + $otherOptions;
         }
 
         return $query;
