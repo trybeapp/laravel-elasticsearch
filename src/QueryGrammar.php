@@ -111,7 +111,9 @@ class QueryGrammar extends BaseGrammar
             $result = $this->{$method}($builder, $where);
 
             // Wrap the result with a bool to make nested wheres work
-            if (count($clauses) > 0 && $where['boolean'] !== 'or') {
+            if ($where['boolean'] === 'and not') {
+                $result = ['bool' => ['must_not' => [$result]]];
+            } elseif (count($clauses) > 0 && $where['boolean'] !== 'or') {
                 $result = ['bool' => ['must' => [$result]]];
             }
 
@@ -164,7 +166,7 @@ class QueryGrammar extends BaseGrammar
             ];
 
             $where['not'] = !$value;
-        } else if (in_array($where['operator'], array_keys($operatorsMap))) {
+        } elseif (in_array($where['operator'], array_keys($operatorsMap))) {
             $operator = $operatorsMap[$where['operator']];
             $query    = [
                 'range' => [

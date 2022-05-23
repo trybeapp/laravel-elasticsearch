@@ -170,7 +170,7 @@ class Blueprint extends \Illuminate\Database\Schema\Blueprint
      *
      * @return PropertyDefinition
      */
-    public function float($name, $total = 8, $places = 2): PropertyDefinition
+    public function float($name, $total = 8, $places = 2, $unsigned = false): PropertyDefinition
     {
         return $this->addColumn('float', $name);
     }
@@ -278,7 +278,7 @@ class Blueprint extends \Illuminate\Database\Schema\Blueprint
      *
      * @return PropertyDefinition
      */
-    public function ip(string $name, array $parameters = []): PropertyDefinition
+    public function ip(string $name = 'ip_address', array $parameters = []): PropertyDefinition
     {
         return $this->ipAddress($name, $parameters);
     }
@@ -289,7 +289,7 @@ class Blueprint extends \Illuminate\Database\Schema\Blueprint
      *
      * @return PropertyDefinition
      */
-    public function ipAddress($name, array $parameters = []): PropertyDefinition
+    public function ipAddress($name = 'ip', array $parameters = []): PropertyDefinition
     {
         return $this->addColumn('ip', $name, $parameters);
     }

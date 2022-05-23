@@ -14,7 +14,7 @@ class QueryBuilderTest extends TestCase
     /** @var QueryBuilder */
     private $builder;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -22,10 +22,10 @@ class QueryBuilderTest extends TestCase
         $connection = m::mock(Connection::class);
 
         /** @var QueryGrammar|m\MockInterface $queryGrammar */
-        $queryGrammar = m::mock( QueryGrammar::class );
+        $queryGrammar = m::mock(QueryGrammar::class);
 
         /** @var QueryProcessor|m\MockInterface $queryProcessor */
-        $queryProcessor = m::mock( QueryProcessor::class );
+        $queryProcessor = m::mock(QueryProcessor::class);
 
         $this->builder = new QueryBuilder($connection, $queryGrammar, $queryProcessor);
     }
@@ -40,7 +40,7 @@ class QueryBuilderTest extends TestCase
 
         $this->assertEquals([
             'type' => 'ParentId',
-            'name' => $parentType,
+            'parentType' => $parentType,
             'id' => $id,
             'boolean' => $boolean,
         ], $this->builder->wheres[0]);
