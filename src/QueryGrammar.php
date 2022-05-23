@@ -539,7 +539,7 @@ class QueryGrammar extends BaseGrammar
 
         $otherOptions = array_diff_key(
             $where['options'],
-            array_flip(['fields', 'fuzziness', 'constant_score'])
+            array_flip(['fields', 'fuzziness', 'constant_score', 'matchType'])
         );
 
         if ($matchType === 'multi_match') {
