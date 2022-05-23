@@ -6,7 +6,10 @@ use Carbon\Carbon;
 use Closure;
 use DesignMyNight\Elasticsearch\Connection;
 use DesignMyNight\Elasticsearch\Database\Schema\Blueprint;
-use DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar;
+use DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar as SchemaGrammar;
+use DesignMyNight\Elasticsearch\QueryBuilder;
+use DesignMyNight\Elasticsearch\QueryGrammar;
+use DesignMyNight\Elasticsearch\QueryProcessor as ElasticsearchQueryProcessor;
 use Elasticsearch\Client;
 use Elasticsearch\Namespaces\CatNamespace;
 use Elasticsearch\Namespaces\IndicesNamespace;
@@ -22,10 +25,16 @@ class ElasticsearchGrammarTest extends TestCase
     /** @var Connection|m\CompositeExpectation */
     private $connection;
 
-    /** @var ElasticsearchGrammar */
+    /** @var QueryGrammar */
     private $grammar;
 
-    public function setUp()
+    /** @var SchemaGrammar */
+    private $schemaGrammar;
+
+    /** @var ElasticsearchQueryProcessor */
+    private $processor;
+
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -52,7 +61,10 @@ class ElasticsearchGrammarTest extends TestCase
 
         $this->blueprint = new Blueprint('indices');
         $this->connection = $connection;
-        $this->grammar = new ElasticsearchGrammar();
+        $this->schemaGrammar = new SchemaGrammar();
+        $this->grammar = new QueryGrammar();
+        $this->processor = new ElasticsearchQueryProcessor();
+        $this->builder = new QueryBuilder($this->connection, $this->grammar, $this->processor);
     }
 
     /**
@@ -99,7 +111,7 @@ class ElasticsearchGrammarTest extends TestCase
 
         $this->connection->shouldReceive('createIndex')->once()->with($index, $mapping)->passthru();
 
-        $executable = $this->grammar->compileCreate(new Blueprint(''), new Fluent(), $this->connection);
+        $executable = $this->schemaGrammar->compileCreate(new Blueprint(''), new Fluent(), $this->connection);
 
         $this->assertInstanceOf(Closure::class, $executable);
 
@@ -129,7 +141,7 @@ class ElasticsearchGrammarTest extends TestCase
         $this->connection->shouldReceive('indices')->andReturn($indicesNamespace);
         $this->connection->shouldReceive('dropIndex')->once()->with($index)->passthru();
 
-        $executable = $this->grammar->compileDrop(new Blueprint(''), new Fluent(), $this->connection);
+        $executable = $this->schemaGrammar->compileDrop(new Blueprint(''), new Fluent(), $this->connection);
 
         $this->assertInstanceOf(Closure::class, $executable);
 
@@ -161,7 +173,7 @@ class ElasticsearchGrammarTest extends TestCase
         $this->connection->shouldReceive('cat')->once()->andReturn($catNamespace);
         $this->connection->shouldReceive('dropIndex')->times($times)->with($index)->passthru();
 
-        $executable = $this->grammar->compileDropIfExists(new Blueprint(''), new Fluent(), $this->connection);
+        $executable = $this->schemaGrammar->compileDropIfExists(new Blueprint(''), new Fluent(), $this->connection);
 
         $this->assertInstanceOf(Closure::class, $executable);
 
@@ -190,23 +202,26 @@ class ElasticsearchGrammarTest extends TestCase
         $this->blueprint->date('date');
         $this->blueprint->keyword('status');
 
-        $this->connection->shouldReceive('updateIndex')->once()->with('indices_dev', 'index', [
-            'index' => [
-                'properties' => [
-                    'title' => [
-                        'type' => 'text'
-                    ],
-                    'date' => [
-                        'type' => 'date'
-                    ],
-                    'status' => [
-                        'type' => 'keyword'
-                    ]
+        $indicesNamespace = m::mock(IndicesNamespace::class);
+        $indicesNamespace->shouldReceive('putMapping');
+
+        $this->connection->shouldReceive('indices')->andReturn($indicesNamespace);
+
+        $this->connection->shouldReceive('updateIndex')->once()->withArgs(['indices_dev', [
+            'properties' => [
+                'title' => [
+                    'type' => 'text'
+                ],
+                'date' => [
+                    'type' => 'date'
+                ],
+                'status' => [
+                    'type' => 'keyword'
                 ]
             ]
-        ]);
+        ]]);
 
-        $executable = $this->grammar->compileUpdate(new Blueprint(''), new Fluent(), $this->connection);
+        $executable = $this->schemaGrammar->compileUpdate(new Blueprint(''), new Fluent(), $this->connection);
 
         $this->assertInstanceOf(Closure::class, $executable);
 
@@ -280,7 +295,7 @@ class ElasticsearchGrammarTest extends TestCase
             ]
         ];
 
-        $grammar = new class extends ElasticsearchGrammar
+        $grammar = new class extends SchemaGrammar
         {
             public function outputMapping(Blueprint $blueprint)
             {
@@ -289,5 +304,39 @@ class ElasticsearchGrammarTest extends TestCase
         };
 
         $this->assertEquals($expected, $grammar->outputMapping($this->blueprint));
+    }
+
+    /**
+     * @test
+     */
+    public function it_compiles_a_where_not_query(): void
+    {
+        $this->builder->whereNot(function ($builder) {
+            $builder->where('field', 'value');
+        });
+
+        $this->assertEquals([
+            'index' => '',
+            'body' => [
+                '_source' => true,
+                'query' => [
+                    'bool' => [
+                        'must_not' => [
+                            [
+                                'bool' => [
+                                    'must' => [
+                                        [
+                                            'term' => [
+                                                'field' => 'value',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ], $this->grammar->compileSelect($this->builder));
     }
 }
