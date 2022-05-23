@@ -214,7 +214,7 @@ class QueryBuilder extends BaseBuilder
      * @param  string  $boolean
      * @return self
      */
-    public function whereNot($query, $boolean = 'and'): self
+    public function whereMustNot($query, $boolean = 'and'): self
     {
         $type = 'Not';
 
