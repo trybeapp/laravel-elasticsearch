@@ -4,7 +4,6 @@ namespace Tests\Unit\Console\Mappings;
 
 use DesignMyNight\Elasticsearch\Console\Mappings\IndexRemoveCommand;
 use Elasticsearch\Client;
-use Elasticsearch\ClientBuilder;
 use Elasticsearch\Namespaces\CatNamespace;
 use Elasticsearch\Namespaces\IndicesNamespace;
 use Mockery as m;
@@ -21,7 +20,7 @@ class IndexRemoveCommandTest extends TestCase
     /** @var m\CompositeExpectation|IndexRemoveCommand */
     private $command;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

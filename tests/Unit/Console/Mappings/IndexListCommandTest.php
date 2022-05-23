@@ -4,10 +4,9 @@ namespace Tests\Unit\Console\Mappings;
 
 use DesignMyNight\Elasticsearch\Console\Mappings\IndexListCommand;
 use Elasticsearch\Client;
-use Elasticsearch\ClientBuilder;
 use Elasticsearch\Namespaces\CatNamespace;
-use Orchestra\Testbench\TestCase;
 use Mockery as m;
+use Orchestra\Testbench\TestCase;
 
 /**
  * Class IndexListCommandTest
@@ -23,7 +22,7 @@ class IndexListCommandTest extends TestCase
     /**
      * Set up tests.
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -41,14 +40,14 @@ class IndexListCommandTest extends TestCase
     public function it_gets_a_list_of_indices_on_the_elasticsearch_cluster()
     {
         $catNamespace = m::mock(CatNamespace::class);
-        $catNamespace->shouldReceive('indices')->andReturn([]);
+        $catNamespace->shouldReceive('aliases')->andReturn([]);
 
         $client = m::mock(Client::class);
         $client->shouldReceive('cat')->andReturn($catNamespace);
 
         $this->command->client = $client;
 
-        $this->assertEquals([], $this->command->getIndices());
+        $this->assertEquals([], $this->command->getIndicesForAlias());
     }
 
     /**
@@ -73,18 +72,19 @@ class IndexListCommandTest extends TestCase
                 'alias' => 'test_production',
             ],
         ];
+
         $body = [
             [
-                'index' => '2018_05_21_111500_test_production',
-                'alias' => 'test_production',
+                'index' => '2017_05_21_111500_test_dev',
+                'alias' => 'test_dev',
             ],
             [
                 'index' => '2018_05_21_111500_test_dev',
                 'alias' => 'test_dev',
             ],
             [
-                'index' => '2017_05_21_111500_test_dev',
-                'alias' => 'test_dev',
+                'index' => '2018_05_21_111500_test_production',
+                'alias' => 'test_production',
             ],
         ];
 
@@ -136,7 +136,8 @@ class IndexListCommandTest extends TestCase
                 'index' => 'name of index',
             ],
         ];
-        $this->command->shouldReceive('getIndices')->once()->andReturn($indices);
+
+        $this->command->shouldReceive('indices')->once()->andReturn($indices);
         $this->command->shouldReceive('table')->once()->withAnyArgs();
 
         $this->command->handle();
