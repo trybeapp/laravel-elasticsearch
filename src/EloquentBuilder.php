@@ -72,8 +72,10 @@ class EloquentBuilder extends BaseBuilder
      */
     public function getAggregations(string $collectionClass = ''): Collection
     {
+        $builder = $this->applyScopes();
+
         $collectionClass = $collectionClass ?: Collection::class;
-        $aggregations = $this->query->getAggregationResults();
+        $aggregations = $builder->query->getAggregationResults();
 
         return new $collectionClass($aggregations);
     }
