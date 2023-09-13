@@ -134,4 +134,12 @@ abstract class Aggregation
             $this->applySubAggregations($builder->newQuery())
         );
     }
+
+    /**
+     * @return static
+     */
+    public static function make(): static
+    {
+        return new static;
+    }
 }
