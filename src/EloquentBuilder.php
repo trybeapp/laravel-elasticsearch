@@ -138,7 +138,7 @@ class EloquentBuilder extends BaseBuilder
 
         $results = $this->forPage($page, $perPage)->get($columns);
 
-        $total = $this->toBase()->getCountForPagination($columns);
+        $total = $this->query->getProcessor()->getRawResponse()['hits']['total']['value'];
 
         return new LengthAwarePaginator($results, $total, $perPage, $page, [
             'path'     => Paginator::resolveCurrentPath(),
