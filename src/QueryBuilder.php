@@ -4,6 +4,7 @@ namespace DesignMyNight\Elasticsearch;
 
 use Closure;
 use Illuminate\Database\Query\Builder as BaseBuilder;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
@@ -636,6 +637,29 @@ class QueryBuilder extends BaseBuilder
     protected function runSelect()
     {
         return $this->connection->select($this->toCompiledQuery());
+    }
+
+    /**
+     * Paginate the given query into a simple paginator.
+     *
+     * @param  int|\Closure  $perPage
+     * @param  array|string  $columns
+     * @param  string  $pageName
+     * @param  int|null  $page
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function paginate($perPage = 15, $columns = ['*'], $pageName = 'page', $page = null)
+    {
+        $page = $page ?: Paginator::resolveCurrentPage($pageName);
+
+        $results = $this->forPage($page, $perPage)->get($columns);
+
+        $total = $this->getProcessor()->getRawResponse()['hits']['total']['value'];
+
+        return $this->paginator($results, $total, $perPage, $page, [
+            'path' => Paginator::resolveCurrentPath(),
+            'pageName' => $pageName,
+        ]);
     }
 
     /**
