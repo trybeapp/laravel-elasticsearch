@@ -802,9 +802,20 @@ class QueryGrammar extends BaseGrammar
 
         $method = 'compile' . ucfirst(Str::camel($aggregation['type'])) . 'Aggregation';
 
-        $compiled = [
-            $key => $this->$method($aggregation)
-        ];
+        if (method_exists($this, $method)) {
+            $compiled = [
+                $key => $this->$method($aggregation)
+            ];
+        } else {
+            $type = $aggregation['type'];
+            $args = $aggregation['args'];
+
+            $compiled = [
+                $key => [
+                    $type => $args,
+                ],
+            ];
+        }
 
         if (isset($aggregation['aggregations']) && $aggregation['aggregations']->aggregations) {
             $compiled[$key]['aggregations'] = $this->compileAggregations($aggregation['aggregations']);
