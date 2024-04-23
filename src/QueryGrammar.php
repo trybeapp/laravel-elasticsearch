@@ -165,7 +165,7 @@ class QueryGrammar extends BaseGrammar
                 ],
             ];
 
-            $where['not'] = !$value;
+            $where['not'] = ($where['type'] ?? null) === 'NotNull' ? false : !$value;
         } elseif (in_array($where['operator'], array_keys($operatorsMap))) {
             $operator = $operatorsMap[$where['operator']];
             $query    = [
