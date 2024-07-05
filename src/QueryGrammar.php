@@ -260,9 +260,9 @@ class QueryGrammar extends BaseGrammar
 
         // pass filter to query if empty allowing a filter interface to be used in relation query
         // otherwise match all in relation query
-        if(empty($compiled['query'])) {
+        if (empty($compiled['query'])) {
             $compiled['query'] = empty($compiled['filter']) ? ['match_all' => (object) []] : $compiled['filter'];
-        } else if(!empty($compiled['filter'])) {
+        } elseif (!empty($compiled['filter'])) {
             throw new InvalidArgumentException('Cannot use both filter and query contexts within a relation context');
         }
 
@@ -295,7 +295,8 @@ class QueryGrammar extends BaseGrammar
      * @param array   $where
      * @return array
      */
-    protected function compileWhereParentId(Builder $builder, array $where) {
+    protected function compileWhereParentId(Builder $builder, array $where): array
+    {
         return [
             'parent_id' => [
                 'type' => $where['relationType'],
@@ -715,7 +716,7 @@ class QueryGrammar extends BaseGrammar
         $options        = array_intersect_key($where['options'], array_flip($optionsToApply));
 
         foreach ($options as $option => $value) {
-            $method = 'apply' . studly_case($option) . 'Option';
+            $method = 'apply' . Str::studly($option) . 'Option';
 
             if (method_exists($this, $method)) {
                 $clause = $this->$method($clause, $value, $where);
