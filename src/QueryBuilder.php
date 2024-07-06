@@ -260,7 +260,7 @@ class QueryBuilder extends BaseBuilder
             func_num_args() === 2
         );
 
-        if ($value instanceof DateTimeInterface) {
+        if ($value instanceof \DateTimeInterface) {
             $value = $value->format('N');
         }
 
