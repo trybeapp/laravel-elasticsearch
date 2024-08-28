@@ -3,8 +3,9 @@
 namespace Tests\Unit\Console\Mappings;
 
 use DesignMyNight\Elasticsearch\Console\Mappings\IndexListCommand;
-use Elasticsearch\Client;
-use Elasticsearch\Namespaces\CatNamespace;
+use Elastic\Elasticsearch\Client;
+use Elastic\Elasticsearch\Endpoints\Cat;
+use Elastic\Elasticsearch\Namespaces\CatNamespace;
 use Mockery as m;
 use Orchestra\Testbench\TestCase;
 
@@ -39,7 +40,7 @@ class IndexListCommandTest extends TestCase
      */
     public function it_gets_a_list_of_indices_on_the_elasticsearch_cluster()
     {
-        $catNamespace = m::mock(CatNamespace::class);
+        $catNamespace = m::mock(Cat::class);
         $catNamespace->shouldReceive('aliases')->andReturn([]);
 
         $client = m::mock(Client::class);

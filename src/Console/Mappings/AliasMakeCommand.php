@@ -2,7 +2,6 @@
 
 namespace DesignMyNight\Elasticsearch\Console\Mappings;
 
-use Carbon\Carbon;
 use DesignMyNight\Elasticsearch\Console\Mappings\Traits\GetsIndices;
 use Exception;
 use Illuminate\Filesystem\Filesystem;

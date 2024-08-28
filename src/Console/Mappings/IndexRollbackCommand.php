@@ -4,7 +4,7 @@ namespace DesignMyNight\Elasticsearch\Console\Mappings;
 
 use DesignMyNight\Elasticsearch\Console\Mappings\Traits\HasConnection;
 use DesignMyNight\Elasticsearch\Console\Mappings\Traits\UpdatesAlias;
-use Elasticsearch\ClientBuilder;
+use Elastic\Elasticsearch\ClientBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 

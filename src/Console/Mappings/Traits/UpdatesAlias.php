@@ -2,7 +2,7 @@
 
 namespace DesignMyNight\Elasticsearch\Console\Mappings\Traits;
 
-use Elasticsearch\Client;
+use Elastic\Elasticsearch\Client;
 use Illuminate\Support\Str;
 
 /**

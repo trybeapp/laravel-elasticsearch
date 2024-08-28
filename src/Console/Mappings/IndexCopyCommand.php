@@ -4,7 +4,7 @@ namespace DesignMyNight\Elasticsearch\Console\Mappings;
 
 use DesignMyNight\Elasticsearch\Console\Mappings\Traits\GetsIndices;
 use DesignMyNight\Elasticsearch\Support\ElasticsearchException;
-use Elasticsearch\Common\Exceptions\ElasticsearchException as ElasticsearchExceptionInterface;
+use Elastic\Elasticsearch\Exceptions\ElasticsearchException as ElasticsearchExceptionInterface;
 
 /**
  * Class IndexCopyCommand
