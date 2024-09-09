@@ -558,18 +558,17 @@ class Connection extends BaseConnection
             // force https for port 443
             $scheme = (int) $port === 443 ? 'https' : $scheme;
 
-            return [
-                'host' => $host,
-                'port' => $port,
-                'scheme' => $scheme,
-                'user' => !empty($config['username']) ? $config['username'] : null,
-                'pass' => !empty($config['password']) ? $config['password'] : null,
-            ];
+            $credentials = isset($config['username']) ?
+                $config['username'] . ':' . ($config['password'] ?? '') . '@' :
+                '';
+
+            $fullHost = $scheme . '://' . $credentials . $host . ':' . $port;
+
+            return $fullHost;
         }, $hosts);
 
         return ClientBuilder::create()
             ->setHosts($hosts)
-            ->setSelector('\Elasticsearch\ConnectionPool\Selectors\StickyRoundRobinSelector')
             ->build();
     }
 
