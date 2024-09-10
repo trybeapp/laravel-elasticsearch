@@ -38,7 +38,6 @@ class Connection extends BaseConnection
         // Extract the hosts from config
         $hosts = explode(',', $config['hosts'] ?? $config['host']);
 
-        // You can pass options directly to the client
         $options = Arr::get($config, 'options', []);
 
         // Create the connection
@@ -544,12 +543,11 @@ class Connection extends BaseConnection
      *
      * @param array $hosts
      * @param array $config
-     *
      * @return \Elasticsearch\Client
      */
     protected function createConnection($hosts, array $config, array $options)
     {
-        // apply config to each host
+        // Apply config to each host
         $hosts = array_map(function ($host) use ($config) {
             $port = !empty($config['port']) ? $config['port'] : 9200;
 
@@ -567,9 +565,14 @@ class Connection extends BaseConnection
             return $fullHost;
         }, $hosts);
 
-        return ClientBuilder::create()
-            ->setHosts($hosts)
-            ->build();
+        $clientBuilder = ClientBuilder::create()
+            ->setHosts($hosts);
+
+        if (isset($options['httpClient'])) {
+            $clientBuilder->setHttpClient($options['httpClient']);
+        }
+
+        return $clientBuilder->build();
     }
 
     /**
