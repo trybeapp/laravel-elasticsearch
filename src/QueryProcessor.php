@@ -12,6 +12,11 @@ class QueryProcessor extends BaseProcessor
     protected $aggregations;
 
     /**
+     * @var \Illuminate\Database\Query\Builder
+     */
+    protected $query;
+
+    /**
      * Process the results of a "select" query.
      *
      * @param  \Illuminate\Database\Query\Builder  $query
@@ -95,7 +100,7 @@ class QueryProcessor extends BaseProcessor
      */
     public function getRawResponse(): array
     {
-        return $this->rawResponse;
+        return $this->rawResponse->asArray();
     }
 
     /**

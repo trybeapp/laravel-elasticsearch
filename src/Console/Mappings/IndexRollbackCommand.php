@@ -2,54 +2,23 @@
 
 namespace DesignMyNight\Elasticsearch\Console\Mappings;
 
-use DesignMyNight\Elasticsearch\Console\Mappings\Traits\HasConnection;
 use DesignMyNight\Elasticsearch\Console\Mappings\Traits\UpdatesAlias;
-use Elasticsearch\ClientBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-/**
- * Class IndexRollbackCommand
- * @package DesignMyNight\Elasticsearch\Console\Mappings
- */
 class IndexRollbackCommand extends Command
 {
-
-    use HasConnection;
     use UpdatesAlias;
 
-    /** @var string $description */
     protected $description = 'Rollback to the previous index';
 
-    /** @var string $host */
-    protected $host;
-
-    /** @var string $signature */
     protected $signature = 'index:rollback';
 
-    /** @var Collection $previousMigrations */
-    private $previousMigrations;
+    private Collection $previousMigrations;
 
-    /**
-     * IndexRollbackCommand constructor.
-     *
-     * @param ClientBuilder $client
-     */
-    public function __construct(ClientBuilder $client)
-    {
-        parent::__construct($client);
-
-        $this->connection = $this->getConnection();
-    }
-
-    /**
-     * Execute the console command.
-     *
-     * @return void
-     */
     public function handle()
     {
-        $mappingMigrations = $this->connection->orderBy('mapping')->orderBy('batch')->get();
+        $mappingMigrations = $this->service->getMappings()->sortBy('mapping')->orderBy('batch')->get();
 
         if ($mappingMigrations->isEmpty()) {
             $this->info('Nothing to rollback.');
@@ -57,7 +26,7 @@ class IndexRollbackCommand extends Command
             return;
         }
 
-        $latestBatch = $this->connection->max('batch');
+        $latestBatch = $this->service->getMappings()->take('batch');
         $mappingMigrations = $this->mapAliases($mappingMigrations);
         $latestMigrations = $mappingMigrations->where('batch', $latestBatch);
         $this->setPreviousMigrations($mappingMigrations->where('batch', $latestBatch - 1));
@@ -66,24 +35,16 @@ class IndexRollbackCommand extends Command
             $this->rollback($migration);
         }
 
-        $this->connection->where('batch', $latestBatch)->delete();
+        $this->service->getMappings()->where('batch', $latestBatch)->delete();
         $this->info('Successfully rolled back.');
     }
 
-    /**
-     * @param Collection $migrations
-     */
-    public function setPreviousMigrations(Collection $migrations):void
+    public function setPreviousMigrations(Collection $migrations): void
     {
         $this->previousMigrations = $migrations;
     }
 
-    /**
-     * @param string $mapping
-     *
-     * @return string
-     */
-    protected function appendSuffix(string $mapping):string
+    protected function appendSuffix(string $mapping): string
     {
         $suffix = config('database.connections.elasticsearch.suffix');
 
@@ -94,12 +55,7 @@ class IndexRollbackCommand extends Command
         return "{$mapping}{$suffix}";
     }
 
-    /**
-     * @param Collection $migrations
-     *
-     * @return Collection
-     */
-    protected function mapAliases(Collection $migrations):Collection
+    protected function mapAliases(Collection $migrations): Collection
     {
         return $migrations->map(function (array $mapping):array {
             $mapping['alias'] = $this->appendSuffix($this->stripTimestamp($mapping['mapping']));
@@ -109,10 +65,7 @@ class IndexRollbackCommand extends Command
         });
     }
 
-    /**
-     * @param array $migration
-     */
-    protected function rollback(array $migration):void
+    protected function rollback(array $migration): void
     {
         if ($match = $this->previousMigrations->where('alias', $migration['alias'])->first()) {
             $this->info("Rolling back {$migration['mapping']} to {$match['mapping']}");
@@ -125,12 +78,7 @@ class IndexRollbackCommand extends Command
         $this->warn("No previous migration found for {$migration['mapping']}. Skipping...");
     }
 
-    /**
-     * @param string $mapping
-     *
-     * @return string
-     */
-    protected function stripTimestamp(string $mapping):string
+    protected function stripTimestamp(string $mapping): string
     {
         return preg_replace('/^[0-9_]+/', '', $mapping, 1);
     }

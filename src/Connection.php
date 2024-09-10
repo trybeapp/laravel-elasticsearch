@@ -6,7 +6,7 @@ use Closure;
 use DesignMyNight\Elasticsearch\Database\Schema\Blueprint;
 use DesignMyNight\Elasticsearch\Database\Schema\ElasticsearchBuilder;
 use DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar;
-use Elasticsearch\ClientBuilder;
+use Elastic\Elasticsearch\ClientBuilder;
 use Illuminate\Database\Connection as BaseConnection;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Grammar as BaseGrammar;
@@ -38,7 +38,6 @@ class Connection extends BaseConnection
         // Extract the hosts from config
         $hosts = explode(',', $config['hosts'] ?? $config['host']);
 
-        // You can pass options directly to the client
         $options = Arr::get($config, 'options', []);
 
         // Create the connection
@@ -544,12 +543,11 @@ class Connection extends BaseConnection
      *
      * @param array $hosts
      * @param array $config
-     *
      * @return \Elasticsearch\Client
      */
     protected function createConnection($hosts, array $config, array $options)
     {
-        // apply config to each host
+        // Apply config to each host
         $hosts = array_map(function ($host) use ($config) {
             $port = !empty($config['port']) ? $config['port'] : 9200;
 
@@ -558,19 +556,23 @@ class Connection extends BaseConnection
             // force https for port 443
             $scheme = (int) $port === 443 ? 'https' : $scheme;
 
-            return [
-                'host' => $host,
-                'port' => $port,
-                'scheme' => $scheme,
-                'user' => !empty($config['username']) ? $config['username'] : null,
-                'pass' => !empty($config['password']) ? $config['password'] : null,
-            ];
+            $credentials = isset($config['username']) ?
+                $config['username'] . ':' . ($config['password'] ?? '') . '@' :
+                '';
+
+            $fullHost = $scheme . '://' . $credentials . $host . ':' . $port;
+
+            return $fullHost;
         }, $hosts);
 
-        return ClientBuilder::create()
-            ->setHosts($hosts)
-            ->setSelector('\Elasticsearch\ConnectionPool\Selectors\StickyRoundRobinSelector')
-            ->build();
+        $clientBuilder = ClientBuilder::create()
+            ->setHosts($hosts);
+
+        if (isset($options['httpClient'])) {
+            $clientBuilder->setHttpClient($options['httpClient']);
+        }
+
+        return $clientBuilder->build();
     }
 
     /**

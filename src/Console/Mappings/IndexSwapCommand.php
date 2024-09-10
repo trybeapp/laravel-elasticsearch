@@ -46,26 +46,9 @@ class IndexSwapCommand extends Command
 
         $this->line("Updating {$alias} to {$index}...");
 
-        $body = [
-            'actions' => [
-                [
-                    'remove' => [
-                        'index' => $this->current($alias),
-                        'alias' => $alias,
-                    ],
-                ],
-                [
-                    'add' => [
-                        'index' => $index,
-                        'alias' => $alias,
-                    ],
-                ],
-            ],
-        ];
-
         if ($this->confirmToProceed()) {
             try {
-                $this->client->indices()->updateAliases(compact('body'));
+                $this->service->updateAliases($alias, $this->current($alias), $index);
             } catch (\Exception $exception) {
                 $this->error("Failed to update alias: {$alias}. {$exception->getMessage()}");
 
@@ -76,21 +59,6 @@ class IndexSwapCommand extends Command
         }
     }
 
-    /**
-     * @return Collection
-     */
-    protected function aliases(): Collection
-    {
-        return Cache::store('array')->rememberForever('aliases', function (): Collection {
-            return collect($this->client->cat()->aliases())->sortBy('alias');
-        });
-    }
-
-    /**
-     * @param string $alias
-     *
-     * @return string
-     */
     protected function current(string $alias): string
     {
         $aliases = $this->aliases();
@@ -107,13 +75,13 @@ class IndexSwapCommand extends Command
         return $alias['index'];
     }
 
-    /**
-     * @return Collection
-     */
     protected function indices(): Collection
     {
-        return Cache::store('array')->rememberForever('indices', function (): Collection {
-            return collect($this->client->cat()->indices())->sortByDesc('index');
-        });
+        return collect($this->service->getIndices())->sortByDesc('index');
+    }
+
+    protected function aliases(): Collection
+    {
+        return collect($this->service->getIndicesForAlias())->sortBy('alias');
     }
 }

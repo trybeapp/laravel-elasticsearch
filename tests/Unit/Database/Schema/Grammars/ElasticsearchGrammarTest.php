@@ -10,9 +10,9 @@ use DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar as
 use DesignMyNight\Elasticsearch\QueryBuilder;
 use DesignMyNight\Elasticsearch\QueryGrammar;
 use DesignMyNight\Elasticsearch\QueryProcessor as ElasticsearchQueryProcessor;
-use Elasticsearch\Client;
-use Elasticsearch\Namespaces\CatNamespace;
-use Elasticsearch\Namespaces\IndicesNamespace;
+use Elastic\Elasticsearch\Client;
+use Elastic\Elasticsearch\Namespaces\CatNamespace;
+use Elastic\Elasticsearch\Namespaces\IndicesNamespace;
 use Illuminate\Support\Fluent;
 use Mockery as m;
 use Tests\TestCase;

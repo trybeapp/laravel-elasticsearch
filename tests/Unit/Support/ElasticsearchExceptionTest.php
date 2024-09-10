@@ -3,8 +3,8 @@
 namespace Tests\Unit\Support;
 
 use DesignMyNight\Elasticsearch\Support\ElasticsearchException;
-use Elasticsearch\Common\Exceptions\ElasticsearchException as BaseElasticsearchException;
-use Elasticsearch\Common\Exceptions\Missing404Exception;
+use Elastic\Elasticsearch\Exceptions\ElasticsearchException as BaseElasticsearchException;
+use Elastic\Elasticsearch\Common\Exceptions\Missing404Exception;
 use Orchestra\Testbench\TestCase;
 
 class ElasticsearchExceptionTest extends TestCase
