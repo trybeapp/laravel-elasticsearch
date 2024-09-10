@@ -1166,11 +1166,6 @@ class QueryGrammar extends BaseGrammar
             }
 
             $params['body'][] = ['index' => $index];
-
-            if (isset($doc['id'])) {
-                unset($doc['id']);
-            }
-
             $params['body'][] = $doc;
         }
 
