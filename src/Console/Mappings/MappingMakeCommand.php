@@ -5,29 +5,19 @@ namespace DesignMyNight\Elasticsearch\Console\Mappings;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Str;
 
-/**
- * Class MappingMakeCommand
- *
- * @package DesignMyNight\Elasticsearch\Console\Mappings
- */
 class MappingMakeCommand extends Command
 {
-
-    /** @var string $description */
     protected $description = 'Create new mapping.';
 
-    /** @var Filesystem $files */
-    protected $files;
+    protected $signature = 'make:mapping
+        {name : Name of the mapping.}
+        {--T|template= : Optional name of existing mapping as template.}
+        {--U|update : Update existing index}';
 
-    /** @var string $signature */
-    protected $signature = 'make:mapping {name : Name of the mapping.} {--T|template= : Optional name of existing mapping as template.} {--U|update : Update existing index}';
+    protected Filesystem $files;
 
-    /**
-     * MappingMakeCommand constructor.
-     *
-     * @param Filesystem $files
-     */
     public function __construct(Filesystem $files)
     {
         parent::__construct();
@@ -35,9 +25,6 @@ class MappingMakeCommand extends Command
         $this->files = $files;
     }
 
-    /**
-     * @return void
-     */
     public function handle()
     {
         try {
@@ -56,32 +43,23 @@ class MappingMakeCommand extends Command
         $this->info("Mapping {$mapping} created successfully.");
     }
 
-    /**
-     * @return string
-     */
     protected function getPath():string
     {
         return base_path("database/mappings/{$this->getStub()}.json");
     }
 
-    /**
-     * @return string
-     */
     protected function getStub():string
     {
         $name = $this->argument('name');
         $timestamp = Carbon::now()->format('Y_m_d_His');
 
         if ($this->option('update')) {
-            $timestamp .= "_update";
+            $timestamp .= '_update';
         }
 
         return "{$timestamp}_{$name}";
     }
 
-    /**
-     * @return string
-     */
     protected function getTemplate():string
     {
         if ($template = $this->option('template')) {
@@ -101,10 +79,7 @@ class MappingMakeCommand extends Command
         return base_path('vendor/designmynight/laravel-elasticsearch/src/Console/Mappings/stubs/mapping.stub');
     }
 
-    /**
-     * @return void
-     */
-    private function resolveMappingsDirectory():void
+    protected function resolveMappingsDirectory():void
     {
         $path = base_path('database/mappings');
 

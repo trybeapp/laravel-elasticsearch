@@ -2,21 +2,12 @@
 
 namespace DesignMyNight\Elasticsearch\Console\Mappings;
 
-use DesignMyNight\Elasticsearch\Console\Mappings\Traits\GetsIndices;
+use Illuminate\Support\Str;
 
-/**
- * Class IndexRemoveCommand
- *
- * @package DesignMyNight\Elasticsearch\Console\Mappings
- */
 class IndexRemoveCommand extends Command
 {
-    use GetsIndices;
-
-    /** @var string $description */
     protected $description = 'Remove index from Elasticsearch';
 
-    /** @var string $signature */
     protected $signature = 'index:remove {index? : Name of the index to remove.}';
 
     /**
@@ -27,7 +18,7 @@ class IndexRemoveCommand extends Command
     public function handle()
     {
         if (!$index = $this->argument('index')) {
-            $indices = collect($this->indices())->pluck('index')->toArray();
+            $indices = collect($this->service->getIndices())->pluck('index')->toArray();
             $index = $this->choice('Which index would you like to delete?', $indices);
         }
 
@@ -35,22 +26,10 @@ class IndexRemoveCommand extends Command
             return;
         }
 
-        $this->removeIndex($index);
-    }
-
-    /**
-     * @param string $index
-     *
-     * @return bool
-     */
-    protected function removeIndex(string $index): bool
-    {
-        $this->info("Removing index: {$index}");
-
         try {
-            $this->client->indices()->delete(['index' => $index]);
+            $this->service->deleteIndex($index);
         } catch (\Exception $exception) {
-            $message = json_decode($exception->getMessage(), true);
+            $message = json_decode(Str::after($exception->getMessage(), ': '), true);
             $this->error("Failed to remove index: {$index}. Reason: {$message['error']['root_cause'][0]['reason']}");
 
             return false;

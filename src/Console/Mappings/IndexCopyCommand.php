@@ -2,60 +2,28 @@
 
 namespace DesignMyNight\Elasticsearch\Console\Mappings;
 
-use DesignMyNight\Elasticsearch\Console\Mappings\Traits\GetsIndices;
-use DesignMyNight\Elasticsearch\Support\ElasticsearchException;
-use Elastic\Elasticsearch\Exceptions\ElasticsearchException as ElasticsearchExceptionInterface;
-
-/**
- * Class IndexCopyCommand
- *
- * @package DesignMyNight\Elasticsearch\Console\Mappings
- */
 class IndexCopyCommand extends Command
 {
-    use GetsIndices;
-
-    /**
-     * @var string $description
-     */
     protected $description = 'Populate an index with all documents from another index';
 
-    /**
-     * @var string $signature
-     */
     protected $signature = 'index:copy {from?} {to?}';
 
-    /**
-     * Execute the console command.
-     *
-     * @return void
-     */
     public function handle()
     {
         $from = $this->from();
         $to = $this->to();
 
-        $body = [
-            'source' => ['index' => $from],
-            'dest' => ['index' => $to],
-        ];
-
         if ($this->confirm("Would you like to copy {$from} to {$to}?")) {
             try {
                 $this->report(
-                    $this->client->reindex(['body' => json_encode($body)])
+                    $this->service->reindex($from, $to)
                 );
-            } catch (ElasticsearchExceptionInterface $exception) {
-                $exception = new ElasticsearchException($exception);
-
-                $this->output->error((string) $exception);
+            } catch (\Exception $exception) {
+                $this->output->error($exception->getMessage());
             }
         }
     }
 
-    /**
-     * @return string
-     */
     protected function from(): string
     {
         if ($from = $this->argument('from')) {
@@ -64,7 +32,7 @@ class IndexCopyCommand extends Command
 
         return $this->choice(
             'Which index would you like to copy from?',
-            collect($this->indices())->pluck('index')->toArray()
+            collect($this->service->getIndices())->pluck('index')->toArray()
         );
     }
 
@@ -79,7 +47,7 @@ class IndexCopyCommand extends Command
 
         return $this->choice(
             'Which index would you like to copy to?',
-            collect($this->indices())->pluck('index')->toArray()
+            collect($this->service->getIndices())->pluck('index')->toArray()
         );
     }
 

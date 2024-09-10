@@ -2,73 +2,47 @@
 
 namespace DesignMyNight\Elasticsearch\Console\Mappings;
 
-use DesignMyNight\Elasticsearch\Console\Mappings\Traits\HasConnection;
 use DesignMyNight\Elasticsearch\Console\Mappings\Traits\UpdatesAlias;
-use Elastic\Elasticsearch\ClientBuilder;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Finder\SplFileInfo;
 
-/**
- * Class MappingMigrateCommand
- *
- * @package DesignMyNight\Elasticsearch\Console\Mappings
- */
 class MappingMigrateCommand extends Command
 {
-
-    use HasConnection;
     use UpdatesAlias;
 
     /** @var string $description */
-    protected $description = 'Index new mapping';
+    protected $description = 'Run all required mapping migrations';
 
     /** @var string $signature */
-    protected $signature = 'migrate:mappings {artisan-command? : Local Artisan indexing command. Defaults to config.} {--I|index : Index mapping on migration} {--S|swap : Automatically update alias.}';
+    protected $signature = 'migrate:mappings
+        {artisan-command? : Local Artisan indexing command. Defaults to config.}
+        {--I|index : Index mapping on migration}
+        {--S|swap : Automatically update alias.}';
 
-    /**
-     * MappingMigrateCommand constructor.
-     *
-     * @param ClientBuilder $client
-     */
-    public function __construct(ClientBuilder $client, Filesystem $files)
+    protected Filesystem $files;
+
+    public function handle(Filesystem $files)
     {
-        parent::__construct($client);
-
-        $this->connection = $this->getConnection();
         $this->files = $files;
-    }
 
-    /**
-     * Execute the console command.
-     *
-     * @return void
-     */
-    public function handle()
-    {
         $mappings = $this->getMappingFiles();
-        $mappingMigrations = $this->connection->orderBy('mapping')
-          ->orderBy('batch')
-          ->pluck('mapping');
+        $mappingMigrations = $this->service->getMappings()
+            ->sortBy('mapping')
+            ->sortBy('batch')
+            ->pluck('mapping');
+
         $pendingMappings = $this->pendingMappings($mappings, $mappingMigrations->toArray());
 
         $this->runPending($pendingMappings);
     }
 
-    /**
-     * @param string $index
-     * @param array  $body
-     */
     protected function createIndex(string $index, array $body):void
     {
         $this->line("Creating index $index");
 
-        $this->client->indices()
-          ->create([
-            'index' => $index,
-            'body'  => $body,
-          ]);
+        $this->service->createIndex($index, $body);
 
         $this->info("Created index $index");
     }
@@ -76,18 +50,12 @@ class MappingMigrateCommand extends Command
     /**
      * @return SplFileInfo[]
      */
-    protected function getMappingFiles():array
+    protected function getMappingFiles(): array
     {
         return $this->files->files(base_path('database/mappings'));
     }
 
-    /**
-     * @param string $mapping
-     * @param bool   $withSuffix
-     *
-     * @return string
-     */
-    protected function getMappingName(string $mapping, bool $withSuffix = false):string
+    protected function getMappingName(string $mapping, bool $withSuffix = false): string
     {
         $mapping = str_replace('.json', '', $mapping);
 
@@ -98,10 +66,7 @@ class MappingMigrateCommand extends Command
         return $mapping;
     }
 
-    /**
-     * @param string $index
-     */
-    protected function index(string $index):void
+    protected function index(string $index): void
     {
         if (!($command = $this->argument('artisan-command'))) {
             $command = config('laravel-elasticsearch.index_command');
@@ -116,24 +81,9 @@ class MappingMigrateCommand extends Command
     }
 
     /**
-     * @param int    $batch
-     * @param string $mapping
-     */
-    protected function migrateMapping(int $batch, string $mapping):void
-    {
-        $this->connection->insert([
-          'batch'   => $batch,
-          'mapping' => $mapping,
-        ]);
-    }
-
-    /**
-     * @param array $files
-     * @param array $migrations
-     *
      * @return SplFileInfo[]
      */
-    protected function pendingMappings(array $files, array $migrations):array
+    protected function pendingMappings(array $files, array $migrations): array
     {
         return Collection::make($files)
           ->reject(function (SplFileInfo $file) use ($migrations):bool {
@@ -143,11 +93,6 @@ class MappingMigrateCommand extends Command
           ->toArray();
     }
 
-    /**
-     * @param SplFileInfo $mapping
-     *
-     * @return array
-     */
     protected function putMapping(SplFileInfo $mapping):void
     {
         $index = $this->getMappingName($mapping->getFileName(), true);
@@ -165,7 +110,7 @@ class MappingMigrateCommand extends Command
     /**
      * @param SplFileInfo[] $pending
      */
-    protected function runPending(array $pending):void
+    protected function runPending(array $pending): void
     {
         if (empty($pending)) {
             $this->info('No new mappings to migrate.');
@@ -173,7 +118,7 @@ class MappingMigrateCommand extends Command
             return;
         }
 
-        $batch = $this->connection->max('batch') + 1;
+        $batch = $this->service->getNextMappingBatch();
 
         $createdAliases = [];
 
@@ -192,7 +137,7 @@ class MappingMigrateCommand extends Command
                 return;
             }
 
-            $this->migrateMapping($batch, $index);
+            $this->service->addMappingRecord($batch, $index);
 
             try {
                 $this->call('make:mapping-alias', [
@@ -217,21 +162,13 @@ class MappingMigrateCommand extends Command
         }
     }
 
-    /**
-     * @param string $index
-     * @param array  $mappings
-     */
-    protected function updateIndex(string $index, array $mappings):void
+    protected function updateIndex(string $index, array $mappings): void
     {
         $index = preg_replace('/[0-9_].+update_/', '', $index);
 
         $this->line("Updating index mapping $index");
 
-        $this->client->indices()
-            ->putMapping([
-            'index' => $index,
-            'body'  => $mappings,
-        ]);
+        $this->service->updateMapping($index, $mappings);
 
         $this->info("Updated index mapping $index");
     }
