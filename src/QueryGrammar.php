@@ -1086,7 +1086,7 @@ class QueryGrammar extends BaseGrammar
                         'order' => $order['direction'] < 0 ? 'desc' : 'asc'
                     ];
 
-                    $allowedOptions = ['missing', 'mode'];
+                    $allowedOptions = ['missing', 'mode', 'nested'];
 
                     $options = isset($order['options']) ? array_intersect_key($order['options'], array_flip($allowedOptions)) : [];
 
