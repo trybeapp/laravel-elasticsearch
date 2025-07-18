@@ -6,18 +6,22 @@ use Closure;
 use DesignMyNight\Elasticsearch\Database\Schema\Blueprint;
 use DesignMyNight\Elasticsearch\Database\Schema\ElasticsearchBuilder;
 use DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar;
+use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\ClientBuilder;
 use Illuminate\Database\Connection as BaseConnection;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Grammar as BaseGrammar;
 use Illuminate\Support\Arr;
 
+/**
+ * @mixin Client
+ */
 class Connection extends BaseConnection
 {
     /**
      * The Elasticsearch client.
      *
-     * @var \Elasticsearch\Client
+     * @var Client
      */
     protected $connection;
 
