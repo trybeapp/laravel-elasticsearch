@@ -2,7 +2,7 @@
 
 namespace DesignMyNight\Elasticsearch;
 
-use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar as BaseGrammar;
 use Illuminate\Support\Str;
@@ -681,14 +681,14 @@ class QueryGrammar extends BaseGrammar
         }
 
         // Convert DateTime values to UTCDateTime.
-        if ($value instanceof DateTime) {
+        if ($value instanceof DateTimeInterface) {
             $value = $this->convertDateTime($value);
         } else if ($value instanceof ObjectID) {
             // Convert DateTime values to UTCDateTime.
             $value = $this->convertKey($value);
         } else if (is_array($value)) {
             foreach ($value as &$val) {
-                if ($val instanceof DateTime) {
+                if ($val instanceof DateTimeInterface) {
                     $val = $this->convertDateTime($val);
                 } else if ($val instanceof ObjectID) {
                     $val = $this->convertKey($val);
