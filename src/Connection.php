@@ -596,7 +596,7 @@ class Connection extends BaseConnection
      */
     protected function getDefaultQueryGrammar()
     {
-        return $this->withIndexSuffix(new QueryGrammar);
+        return $this->withIndexSuffix(new QueryGrammar($this));
     }
 
     /**
