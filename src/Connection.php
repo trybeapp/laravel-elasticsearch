@@ -235,7 +235,7 @@ class Connection extends BaseConnection
     /**
      * Log a query in the connection's query log.
      *
-     * @param string     $query
+     * @param array      $query
      * @param array      $bindings
      * @param float|null $time
      *
@@ -243,11 +243,75 @@ class Connection extends BaseConnection
      */
     public function logQuery($query, $bindings, $time = null)
     {
+        $query = $this->replaceQueryBindings($query);
+
         $this->event(new QueryExecuted(json_encode($query), $bindings, $time, $this));
 
         if ($this->loggingQueries) {
             $this->queryLog[] = compact('query', 'bindings', 'time');
         }
+    }
+
+    /**
+     * Replace values inside the query body with '?' for safe logging, leaving all
+     * other top-level query parameters (index, size, scroll, etc.) untouched.
+     *
+     * @param array $query
+     *
+     * @return array
+     */
+    protected function replaceQueryBindings(array $query): array
+    {
+        if (isset($query['body'])) {
+            $query['body'] = $this->replaceBodyValues($query['body']);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Recursively replace leaf values with '?' while preserving:
+     * - Field names in DSL clauses (e.g. {"exists": {"field": "some_field"}})
+     * - The _source array (field projection, not user data)
+     * - The _index value inside bulk action descriptors
+     *
+     * @param mixed       $value
+     * @param string|null $parentKey
+     *
+     * @return mixed
+     */
+    protected function replaceBodyValues(mixed $value, ?string $parentKey = null): mixed
+    {
+        $fieldNameKeys = ['field', 'fields', 'path', 'default_field'];
+        $bulkActionKeys = ['index', 'create', 'update', 'delete'];
+
+        if ($parentKey === '_source') {
+            return $value;
+        }
+
+        $isFieldNameKey = $parentKey !== null && in_array($parentKey, $fieldNameKeys, true);
+
+        if (!is_array($value)) {
+            return $isFieldNameKey ? $value : '?';
+        }
+
+        if ($isFieldNameKey) {
+            return array_map(fn ($v) => is_array($v) ? $this->replaceBodyValues($v) : $v, $value);
+        }
+
+        if ($parentKey !== null && in_array($parentKey, $bulkActionKeys, true)) {
+            foreach ($value as $k => $v) {
+                $value[$k] = $k === '_index' ? $v : (is_array($v) ? $this->replaceBodyValues($v, $k) : '?');
+            }
+
+            return $value;
+        }
+
+        foreach ($value as $k => $v) {
+            $value[$k] = $this->replaceBodyValues($v, (string) $k);
+        }
+
+        return $value;
     }
 
     /**
