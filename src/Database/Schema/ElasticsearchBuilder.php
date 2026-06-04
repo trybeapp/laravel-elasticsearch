@@ -35,6 +35,7 @@ class ElasticsearchBuilder extends Builder
         }));
     }
 
+    #[\Override]
     public function dropAllTables()
     {
         collect($this->connection->indices()->get(['index' => '*'])->asArray())->keys()->each(function (string $index) {
