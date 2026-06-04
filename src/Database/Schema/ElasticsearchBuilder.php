@@ -3,11 +3,13 @@
 namespace DesignMyNight\Elasticsearch\Database\Schema;
 
 use Closure;
+use DesignMyNight\Elasticsearch\Connection;
 use Illuminate\Database\Schema\Builder;
 
 /**
  * Class Builder
  * @package DesignMyNight\Elasticsearch\Database\Schema
+ * @property Connection $connection
  */
 class ElasticsearchBuilder extends Builder
 {
@@ -31,6 +33,14 @@ class ElasticsearchBuilder extends Builder
 
             $callback($blueprint);
         }));
+    }
+
+    #[\Override]
+    public function dropAllTables()
+    {
+        collect($this->connection->indices()->get(['index' => '*'])->asArray())->keys()->each(function (string $index) {
+            $this->connection->indices()->delete(compact('index'));
+        });
     }
 
     /**
