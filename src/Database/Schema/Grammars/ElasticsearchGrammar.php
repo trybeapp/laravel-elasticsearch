@@ -5,6 +5,7 @@ namespace DesignMyNight\Elasticsearch\Database\Schema\Grammars;
 use Closure;
 use DesignMyNight\Elasticsearch\Connection;
 use DesignMyNight\Elasticsearch\Database\Schema\Blueprint;
+use DesignMyNight\Elasticsearch\Support\SchemaCompatibility;
 use Illuminate\Database\Schema\Blueprint as BaseBlueprint;
 use Illuminate\Database\Schema\Grammars\Grammar;
 use Illuminate\Support\Fluent;
@@ -221,6 +222,8 @@ class ElasticsearchGrammar extends Grammar
      */
     private function createBlueprint(): Blueprint
     {
-        return new Blueprint('');
+        return SchemaCompatibility::blueprintExpectsConnection()
+            ? new Blueprint($this->connection, '')
+            : new Blueprint('');
     }
 }

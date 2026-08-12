@@ -4,6 +4,7 @@ namespace DesignMyNight\Elasticsearch\Database\Schema;
 
 use Closure;
 use DesignMyNight\Elasticsearch\Connection;
+use DesignMyNight\Elasticsearch\Support\SchemaCompatibility;
 use Illuminate\Database\Schema\Builder;
 
 /**
@@ -46,8 +47,10 @@ class ElasticsearchBuilder extends Builder
     /**
      * @inheritDoc
      */
-    protected function createBlueprint($table, Closure $callback = null)
+    protected function createBlueprint($table, ?Closure $callback = null)
     {
-        return new Blueprint($table, $callback);
+        return SchemaCompatibility::blueprintExpectsConnection()
+            ? new Blueprint($this->connection, $table, $callback)
+            : new Blueprint($table, $callback);
     }
 }

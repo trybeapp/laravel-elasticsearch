@@ -76,21 +76,25 @@ class Blueprint extends \Illuminate\Database\Schema\Blueprint
      *
      * @return PropertyDefinition
      */
-    public function binary($name, array $parameters = []): PropertyDefinition
+    public function binary($name, $parameters = [], $fixed = false): PropertyDefinition
     {
-        return $this->addColumn('binary', $name, $parameters);
+        return $this->addColumn('binary', $name, (array) $parameters);
     }
 
     /**
      * Execute the blueprint against the database.
      *
-     * @param \Illuminate\Database\Connection              $connection
-     * @param \Illuminate\Database\Schema\Grammars\Grammar $grammar
+     * Laravel 12 dropped the connection and grammar arguments, holding both on
+     * the blueprint itself, so either shape is accepted.
+     *
+     * @param \Illuminate\Database\Connection|\Illuminate\Database\Schema\Grammars\Grammar ...$args
      *
      * @return void
      */
-    public function build(Connection $connection, Grammar $grammar)
+    public function build(...$args)
     {
+        [$connection, $grammar] = $this->resolveSchemaContext($args);
+
         foreach ($this->toSql($connection, $grammar) as $statement) {
             if ($connection->pretending()) {
                 return;
@@ -431,12 +435,17 @@ class Blueprint extends \Illuminate\Database\Schema\Blueprint
     }
 
     /**
-     * @param Connection $connection
-     * @param Grammar    $grammar
+     * Laravel 12 dropped the connection and grammar arguments, holding both on
+     * the blueprint itself, so either shape is accepted.
+     *
+     * @param \Illuminate\Database\Connection|\Illuminate\Database\Schema\Grammars\Grammar ...$args
+     *
      * @return \Closure[]
      */
-    public function toSql(Connection $connection, Grammar $grammar)
+    public function toSql(...$args)
     {
+        [$connection, $grammar] = $this->resolveSchemaContext($args);
+
         $this->addImpliedCommands($grammar);
 
         $statements = [];
@@ -476,5 +485,21 @@ class Blueprint extends \Illuminate\Database\Schema\Blueprint
     public function update()
     {
         return $this->addCommand('update');
+    }
+
+    /**
+     * Resolve the connection and grammar from either the pre-Laravel 12
+     * arguments or, when absent, the blueprint's own properties.
+     *
+     * @param array $args
+     *
+     * @return array
+     */
+    private function resolveSchemaContext(array $args): array
+    {
+        return [
+            $args[0] ?? $this->connection,
+            $args[1] ?? $this->grammar,
+        ];
     }
 }
