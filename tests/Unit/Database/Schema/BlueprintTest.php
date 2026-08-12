@@ -3,7 +3,9 @@
 namespace Tests\Unit\Database\Schema;
 
 use Carbon\Carbon;
+use DesignMyNight\Elasticsearch\Connection;
 use DesignMyNight\Elasticsearch\Database\Schema\Blueprint;
+use DesignMyNight\Elasticsearch\Support\SchemaCompatibility;
 use Tests\TestCase;
 
 class BlueprintTest extends TestCase
@@ -15,7 +17,27 @@ class BlueprintTest extends TestCase
     {
         parent::setUp();
 
-        $this->blueprint = new Blueprint('indices');
+        $this->blueprint = SchemaCompatibility::blueprintExpectsConnection()
+            ? new Blueprint($this->newConnection(), 'indices')
+            : new Blueprint('indices');
+    }
+
+    /**
+     * Laravel 12 blueprints resolve their grammar from the connection they are
+     * given, so one is needed here. The real constructor is skipped so no
+     * Elasticsearch server is required.
+     *
+     * @return Connection
+     */
+    private function newConnection(): Connection
+    {
+        return new class extends Connection
+        {
+            public function __construct()
+            {
+                // Skip the real constructor to avoid requiring an Elasticsearch server
+            }
+        };
     }
 
     /**

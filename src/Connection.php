@@ -6,6 +6,7 @@ use Closure;
 use DesignMyNight\Elasticsearch\Database\Schema\Blueprint;
 use DesignMyNight\Elasticsearch\Database\Schema\ElasticsearchBuilder;
 use DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar;
+use DesignMyNight\Elasticsearch\Support\SchemaCompatibility;
 use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\ClientBuilder;
 use Illuminate\Database\Connection as BaseConnection;
@@ -202,7 +203,9 @@ class Connection extends BaseConnection
      */
     public function getSchemaGrammar()
     {
-        return new ElasticsearchGrammar();
+        return SchemaCompatibility::grammarExpectsConnection()
+            ? new ElasticsearchGrammar($this)
+            : new ElasticsearchGrammar();
     }
 
     /**
