@@ -10,12 +10,15 @@ use DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar as
 use DesignMyNight\Elasticsearch\QueryBuilder;
 use DesignMyNight\Elasticsearch\QueryGrammar;
 use DesignMyNight\Elasticsearch\QueryProcessor as ElasticsearchQueryProcessor;
-use Elastic\Elasticsearch\Client;
+use DesignMyNight\Elasticsearch\Support\SchemaCompatibility;
+use Elastic\Elasticsearch\ClientInterface;
 use Elastic\Elasticsearch\Namespaces\CatNamespace;
 use Elastic\Elasticsearch\Namespaces\IndicesNamespace;
 use Illuminate\Support\Fluent;
 use Mockery as m;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 class ElasticsearchGrammarTest extends TestCase
 {
@@ -46,8 +49,8 @@ class ElasticsearchGrammarTest extends TestCase
         $indicesNamespace = m::mock(IndicesNamespace::class);
         $indicesNamespace->shouldReceive('existsAlias')->andReturnFalse();
 
-        /** @var Client|m\CompositeExpectation $client */
-        $client = m::mock(Client::class);
+        /** @var ClientInterface|m\CompositeExpectation $client */
+        $client = m::mock(ClientInterface::class);
         $client->shouldReceive('cat')->andReturn($catNamespace);
         $client->shouldReceive('indices')->andReturn($indicesNamespace);
 
@@ -59,19 +62,40 @@ class ElasticsearchGrammarTest extends TestCase
             Carbon::create(2019, 7, 2, 12)
         );
 
-        $this->blueprint = new Blueprint('indices');
         $this->connection = $connection;
-        $this->schemaGrammar = new SchemaGrammar();
-        $this->grammar = new QueryGrammar();
+        $this->blueprint = SchemaCompatibility::blueprintExpectsConnection()
+            ? new Blueprint($connection, 'indices')
+            : new Blueprint('indices');
+        $this->schemaGrammar = SchemaCompatibility::grammarExpectsConnection()
+            ? new SchemaGrammar($connection)
+            : new SchemaGrammar();
+        $this->grammar = SchemaCompatibility::grammarExpectsConnection()
+            ? new QueryGrammar($connection)
+            : new QueryGrammar();
         $this->processor = new ElasticsearchQueryProcessor();
         $this->builder = new QueryBuilder($this->connection, $this->grammar, $this->processor);
     }
 
     /**
+     * Laravel 12 blueprints resolve their grammar from the connection they are
+     * given, so one is needed there but must not be passed on 10 or 11.
+     *
+     * @param string $table
+     *
+     * @return Blueprint
+     */
+    private function newBlueprint(string $table): Blueprint
+    {
+        return SchemaCompatibility::blueprintExpectsConnection()
+            ? new Blueprint($this->connection, $table)
+            : new Blueprint($table);
+    }
+
+    /**
      * It returns a closure that will create an index.
-     * @test
      * @covers \DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar::compileCreate
      */
+    #[Test]
     public function it_returns_a_closure_that_will_create_an_index()
     {
         $alias = 'indices_dev';
@@ -111,7 +135,7 @@ class ElasticsearchGrammarTest extends TestCase
 
         $this->connection->shouldReceive('createIndex')->once()->with($index, $mapping)->passthru();
 
-        $executable = $this->schemaGrammar->compileCreate(new Blueprint(''), new Fluent(), $this->connection);
+        $executable = $this->schemaGrammar->compileCreate($this->newBlueprint(''), new Fluent(), $this->connection);
 
         $this->assertInstanceOf(Closure::class, $executable);
 
@@ -120,9 +144,9 @@ class ElasticsearchGrammarTest extends TestCase
 
     /**
      * It returns a closure that will drop an index.
-     * @test
      * @covers \DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar::compileDrop
      */
+    #[Test]
     public function it_returns_a_closure_that_will_drop_an_index()
     {
         $index = '2019_06_03_120000_indices_dev';
@@ -141,7 +165,7 @@ class ElasticsearchGrammarTest extends TestCase
         $this->connection->shouldReceive('indices')->andReturn($indicesNamespace);
         $this->connection->shouldReceive('dropIndex')->once()->with($index)->passthru();
 
-        $executable = $this->schemaGrammar->compileDrop(new Blueprint(''), new Fluent(), $this->connection);
+        $executable = $this->schemaGrammar->compileDrop($this->newBlueprint(''), new Fluent(), $this->connection);
 
         $this->assertInstanceOf(Closure::class, $executable);
 
@@ -150,14 +174,14 @@ class ElasticsearchGrammarTest extends TestCase
 
     /**
      * It returns a closure that will drop an index if it exists.
-     * @test
      * @covers       \DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar::compileDropIfExists
-     * @dataProvider compile_drop_if_exists_data_provider
      */
+    #[Test]
+    #[DataProvider('compile_drop_if_exists_data_provider')]
     public function it_returns_a_closure_that_will_drop_an_index_if_it_exists($table, $times)
     {
         $index = '2019_06_03_120000_indices_dev';
-        $this->blueprint = new Blueprint($table);
+        $this->blueprint = $this->newBlueprint($table);
 
         /** @var CatNamespace|m\CompositeExpectation $catNamespace */
         $catNamespace = m::mock(CatNamespace::class);
@@ -173,7 +197,7 @@ class ElasticsearchGrammarTest extends TestCase
         $this->connection->shouldReceive('cat')->once()->andReturn($catNamespace);
         $this->connection->shouldReceive('dropIndex')->times($times)->with($index)->passthru();
 
-        $executable = $this->schemaGrammar->compileDropIfExists(new Blueprint(''), new Fluent(), $this->connection);
+        $executable = $this->schemaGrammar->compileDropIfExists($this->newBlueprint(''), new Fluent(), $this->connection);
 
         $this->assertInstanceOf(Closure::class, $executable);
 
@@ -183,7 +207,7 @@ class ElasticsearchGrammarTest extends TestCase
     /**
      * compileDropIfExists data provider.
      */
-    public function compile_drop_if_exists_data_provider(): array
+    public static function compile_drop_if_exists_data_provider(): array
     {
         return [
             'it exists' => ['indices', 1],
@@ -193,9 +217,9 @@ class ElasticsearchGrammarTest extends TestCase
 
     /**
      * It returns a closure that will update an index mapping.
-     * @test
      * @covers \DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar::compileUpdate
      */
+    #[Test]
     public function it_returns_a_closure_that_will_update_an_index_mapping()
     {
         $this->blueprint->text('title');
@@ -221,7 +245,7 @@ class ElasticsearchGrammarTest extends TestCase
             ]
         ]]);
 
-        $executable = $this->schemaGrammar->compileUpdate(new Blueprint(''), new Fluent(), $this->connection);
+        $executable = $this->schemaGrammar->compileUpdate($this->newBlueprint(''), new Fluent(), $this->connection);
 
         $this->assertInstanceOf(Closure::class, $executable);
 
@@ -230,9 +254,9 @@ class ElasticsearchGrammarTest extends TestCase
 
     /**
      * It generates a mapping.
-     * @test
      * @covers \DesignMyNight\Elasticsearch\Database\Schema\Grammars\ElasticsearchGrammar::getColumns
      */
+    #[Test]
     public function it_generates_a_mapping()
     {
         $this->blueprint->join('joins', ['parent' => 'child']);
@@ -295,7 +319,7 @@ class ElasticsearchGrammarTest extends TestCase
             ]
         ];
 
-        $grammar = new class extends SchemaGrammar
+        $grammar = new class($this->connection) extends SchemaGrammar
         {
             public function outputMapping(Blueprint $blueprint)
             {
@@ -306,9 +330,7 @@ class ElasticsearchGrammarTest extends TestCase
         $this->assertEquals($expected, $grammar->outputMapping($this->blueprint));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_compiles_a_where_not_query(): void
     {
         $this->builder->whereNot(function ($builder) {

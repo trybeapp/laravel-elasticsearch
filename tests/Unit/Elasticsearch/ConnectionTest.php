@@ -4,6 +4,7 @@ namespace Tests\Unit\Elasticsearch;
 
 use DesignMyNight\Elasticsearch\Connection;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class ConnectionTest extends TestCase
 {
@@ -27,7 +28,7 @@ class ConnectionTest extends TestCase
         };
     }
 
-    /** @test */
+    #[Test]
     public function it_only_replaces_values_inside_the_body(): void
     {
         $query = [
@@ -47,7 +48,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('?', $result['body']['query']['term']['status']);
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_field_names_in_dsl_clauses(): void
     {
         $query = [
@@ -68,7 +69,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('deleted_at', $result['body']['query']['bool']['must_not'][0]['exists']['field']);
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_the_source_projection(): void
     {
         $query = [
@@ -87,7 +88,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('?', $result['body']['query']['term']['booking_id']);
     }
 
-    /** @test */
+    #[Test]
     public function it_replaces_term_query_values(): void
     {
         $query = [
@@ -120,7 +121,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('?', $result['body']['size']);
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_index_name_in_bulk_action_descriptors(): void
     {
         $query = [
@@ -136,7 +137,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('?', $result['body'][0]['index']['_id']);
     }
 
-    /** @test */
+    #[Test]
     public function it_replaces_document_field_values_in_bulk_body(): void
     {
         $query = [
@@ -162,7 +163,7 @@ class ConnectionTest extends TestCase
         $this->assertEquals('?', $document['customer']['email']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_query_unchanged_when_there_is_no_body(): void
     {
         $query = ['index' => 'basket_items', 'scroll_id' => 'abc123'];

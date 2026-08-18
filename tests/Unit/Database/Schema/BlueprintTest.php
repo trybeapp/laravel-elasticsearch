@@ -7,6 +7,8 @@ use DesignMyNight\Elasticsearch\Connection;
 use DesignMyNight\Elasticsearch\Database\Schema\Blueprint;
 use DesignMyNight\Elasticsearch\Support\SchemaCompatibility;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 class BlueprintTest extends TestCase
 {
@@ -43,10 +45,10 @@ class BlueprintTest extends TestCase
     /**
      * It gets the index alias.
      *
-     * @test
      * @covers       \DesignMyNight\Elasticsearch\Database\Schema\Blueprint::getAlias
-     * @dataProvider get_alias_data_provider
      */
+    #[Test]
+    #[DataProvider('get_alias_data_provider')]
     public function it_gets_the_index_alias(string $expected, $alias = null)
     {
         if (isset($alias)) {
@@ -59,7 +61,7 @@ class BlueprintTest extends TestCase
     /**
      * getAlias data provider.
      */
-    public function get_alias_data_provider():array
+    public static function get_alias_data_provider(): array
     {
         return [
             'alias not provided' => ['indices_dev'],
@@ -70,10 +72,10 @@ class BlueprintTest extends TestCase
     /**
      * It gets the document type.
      *
-     * @test
      * @covers       \DesignMyNight\Elasticsearch\Database\Schema\Blueprint::getDocumentType
-     * @dataProvider get_document_type_data_provider
      */
+    #[Test]
+    #[DataProvider('get_document_type_data_provider')]
     public function it_gets_the_document_type(string $expected, $documentType = null)
     {
         if (isset($documentType)) {
@@ -86,7 +88,7 @@ class BlueprintTest extends TestCase
     /**
      * getDocumentType data provider.
      */
-    public function get_document_type_data_provider():array
+    public static function get_document_type_data_provider(): array
     {
         return [
             'document not provided' => ['index'],
@@ -97,9 +99,9 @@ class BlueprintTest extends TestCase
     /**
      * It generates an index name.
      *
-     * @test
      * @covers \DesignMyNight\Elasticsearch\Database\Schema\Blueprint::getIndex
      */
+    #[Test]
     public function it_generates_an_index_name()
     {
         Carbon::setTestNow(Carbon::create(2019, 7, 2, 12));
@@ -109,9 +111,8 @@ class BlueprintTest extends TestCase
 
     /**
      * adds settings ready to be used
-     *
-     * @test
      */
+    #[Test]
     public function adds_settings_ready_to_be_used():void
     {
         $settings = [

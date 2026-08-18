@@ -3,55 +3,56 @@
 namespace Tests\Unit\Support;
 
 use DesignMyNight\Elasticsearch\Support\ElasticsearchException;
-use Elastic\Elasticsearch\Exceptions\ElasticsearchException as BaseElasticsearchException;
-use Elastic\Elasticsearch\Common\Exceptions\Missing404Exception;
+use Elastic\Elasticsearch\Exception\ClientResponseException;
+use Elastic\Elasticsearch\Exception\ElasticsearchException as BaseElasticsearchException;
 use Orchestra\Testbench\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 class ElasticsearchExceptionTest extends TestCase
 {
-    /**
-     * @test
-     * @dataProvider errorMessagesProvider
-     */
-    public function returns_the_error_code(BaseElasticsearchException $exception, string $code): void
+    #[Test]
+    #[DataProvider('errorMessagesProvider')]
+    public function returns_the_error_code(
+        BaseElasticsearchException $exception,
+        string $code,
+        string $message,
+        array $raw
+    ): void
     {
         $exception = new ElasticsearchException($exception);
 
         $this->assertSame($code, $exception->getCode());
     }
 
-    /**
-     * @test
-     * @dataProvider errorMessagesProvider
-     */
+    #[Test]
+    #[DataProvider('errorMessagesProvider')]
     public function returns_the_error_message(
         BaseElasticsearchException $exception,
         string $code,
-        string $message
+        string $message,
+        array $raw
     ): void {
         $exception = new ElasticsearchException($exception);
 
         $this->assertSame($message, $exception->getMessage());
     }
 
-    /**
-     * @test
-     * @dataProvider errorMessagesProvider
-     */
+    #[Test]
+    #[DataProvider('errorMessagesProvider')]
     public function converts_the_error_to_string(
         BaseElasticsearchException $exception,
         string $code,
-        string $message
+        string $message,
+        array $raw
     ): void {
         $exception = new ElasticsearchException($exception);
 
         $this->assertSame("$code: $message", (string)$exception);
     }
 
-    /**
-     * @test
-     * @dataProvider errorMessagesProvider
-     */
+    #[Test]
+    #[DataProvider('errorMessagesProvider')]
     public function returns_the_raw_error_message_as_an_array(
         BaseElasticsearchException $exception,
         string $code,
@@ -64,7 +65,7 @@ class ElasticsearchExceptionTest extends TestCase
         $this->assertSame($raw, $exception->getRaw());
     }
 
-    public function errorMessagesProvider(): array
+    public static function errorMessagesProvider(): array
     {
         $missingIndexError = json_encode(
             [
@@ -92,10 +93,10 @@ class ElasticsearchExceptionTest extends TestCase
 
         return [
             'missing_index' => [
-                'error'   => new Missing404Exception($missingIndexError),
-                'code'    => 'index_not_found_exception',
-                'message' => 'no such index [bob]',
-                'raw'     => json_decode($missingIndexError, true),
+                new ClientResponseException($missingIndexError, 404),
+                'index_not_found_exception',
+                'no such index [bob]',
+                json_decode($missingIndexError, true),
             ],
         ];
     }
