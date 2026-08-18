@@ -2,7 +2,7 @@
 
 namespace DesignMyNight\Elasticsearch\Support;
 
-use Elastic\Elasticsearch\Exceptions\ElasticsearchException as BaseElasticsearchException;
+use Elastic\Elasticsearch\Exception\ElasticsearchException as BaseElasticsearchException;
 use Exception;
 
 class ElasticsearchException extends Exception
@@ -15,7 +15,7 @@ class ElasticsearchException extends Exception
      *
      * @param BaseElasticsearchException $exception
      */
-    public function __construct(ElasticsearchException $exception)
+    public function __construct(BaseElasticsearchException $exception)
     {
         $this->parseException($exception);
     }

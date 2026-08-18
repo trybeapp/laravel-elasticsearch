@@ -8,6 +8,8 @@ use DesignMyNight\Elasticsearch\QueryGrammar;
 use DesignMyNight\Elasticsearch\QueryProcessor;
 use Mockery as m;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 class QueryBuilderTest extends TestCase
 {
@@ -30,10 +32,8 @@ class QueryBuilderTest extends TestCase
         $this->builder = new QueryBuilder($connection, $queryGrammar, $queryProcessor);
     }
 
-    /**
-     * @test
-     * @dataProvider whereParentIdProvider
-     */
+    #[Test]
+    #[DataProvider('whereParentIdProvider')]
     public function adds_parent_id_to_wheres_clause(string $parentType, $id, string $boolean):void
     {
         $this->builder->whereParentId($parentType, $id, $boolean);
@@ -49,7 +49,7 @@ class QueryBuilderTest extends TestCase
     /**
      * @return array
      */
-    public function whereParentIdProvider():array
+    public static function whereParentIdProvider():array
     {
         return [
             'boolean and' => ['my_parent', 1, 'and'],
