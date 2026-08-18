@@ -125,7 +125,7 @@ class Connection extends BaseConnection
      *
      * @return \Generator
      */
-    public function cursor($query, $bindings = [], $useReadPdo = false)
+    public function cursor($query, $bindings = [], $useReadPdo = false, array $fetchUsing = [])
     {
         $scrollTimeout = '30s';
         $limit = $query['size'] ?? 0;
@@ -441,7 +441,7 @@ class Connection extends BaseConnection
      *
      * @return array
      */
-    public function select($params, $bindings = [], $useReadPdo = true)
+    public function select($params, $bindings = [], $useReadPdo = true, array $fetchUsing = [])
     {
         return $this->run(
             $this->addClientParams($params),
