@@ -2,6 +2,7 @@
 
 namespace DesignMyNight\Elasticsearch\Console\Mappings;
 
+use DesignMyNight\Elasticsearch\Support\AliasAlreadyExistsException;
 use Exception;
 
 class AliasMakeCommand extends Command
@@ -14,13 +15,28 @@ class AliasMakeCommand extends Command
 
     public function handle()
     {
+        $aliasName = $this->argument('name');
+
         try {
-            $aliasName = $this->argument('name');
             $indexName = $this->getIndexName();
 
-            $this->service->createAlias($indexName, $aliasName);
+            $created = $this->service->createAlias($indexName, $aliasName);
+        } catch (AliasAlreadyExistsException $exception) {
+            // A warning, not an error: the alias exists, which is what we were
+            // asked to bring about. Moving one that is already in use is what
+            // index:swap and migrate:mappings --swap are for, so do not fail
+            // a re-run that simply has nothing left to do.
+            $this->warn($exception->getMessage());
+
+            return;
         } catch (Exception $exception) {
             $this->error($exception->getMessage());
+
+            return;
+        }
+
+        if (!$created) {
+            $this->info("Alias $aliasName already points at $indexName.");
 
             return;
         }
