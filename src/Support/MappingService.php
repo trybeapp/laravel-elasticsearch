@@ -61,16 +61,37 @@ class MappingService
         $this->connection->indices()->delete(['index' => $index]);
     }
 
-    public function createAlias(string $index, string $alias): void
+    /**
+     * Point $alias at $index, unless it is already there.
+     *
+     * @return bool True when the alias was created, false when it already
+     *              pointed at $index and there was nothing to do.
+     *
+     * @throws AliasAlreadyExistsException When the name is taken by a
+     *                                     different index — a real conflict,
+     *                                     as opposed to work already done.
+     */
+    public function createAlias(string $index, string $alias): bool
     {
         if ($this->connection->indices()->existsAlias(['name' => $alias])->asBool()) {
-            throw new \Exception("Alias $alias already exists");
+            $indices = array_column($this->getIndicesForAlias($alias), 'index');
+
+            // Already where we were asked to point it. Re-running a mapping
+            // migration against an environment that has one is not a failure,
+            // so say nothing and let the caller carry on.
+            if (in_array($index, $indices, true)) {
+                return false;
+            }
+
+            throw new AliasAlreadyExistsException($alias, $indices);
         }
 
         $this->connection->indices()->putAlias([
             'index' => $index,
             'name' => $alias
         ]);
+
+        return true;
     }
 
     public function updateAliases(string $alias, string $currentIndex, string $newIndex): void
