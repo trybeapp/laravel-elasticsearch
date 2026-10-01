@@ -536,15 +536,34 @@ class QueryBuilder extends BaseBuilder
      */
     public function orderBy($column, $direction = 1, $options = null): self
     {
-        if (is_string($direction)) {
-            $direction = strtolower($direction) == 'asc' ? 1 : -1;
-        }
+        $direction = $this->normalizeOrderDirection($direction);
 
         $type = isset($options['type']) ? $options['type'] : 'basic';
 
         $this->orders[] = compact('column', 'direction', 'type', 'options');
 
         return $this;
+    }
+
+    /**
+     * Normalise an order direction (int, string or enum such as Laravel 13's SortDirection) to 1 or -1
+     *
+     * @param  mixed  $direction
+     * @return int
+     */
+    protected function normalizeOrderDirection($direction): int
+    {
+        if ($direction instanceof \BackedEnum) {
+            $direction = $direction->value;
+        } elseif ($direction instanceof \UnitEnum) {
+            $direction = $direction->name;
+        }
+
+        if (is_string($direction)) {
+            return strtolower($direction) === 'asc' ? 1 : -1;
+        }
+
+        return $direction < 0 ? -1 : 1;
     }
 
     /**
