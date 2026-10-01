@@ -162,4 +162,10 @@ When creating a new index during a `migrate:mappings` the command will automatic
 
 During the first migration an index appears in the `migrate:mappings` command will also switch the alias to the latest index mapping.  The above will only happen when the alias does not already exist.
 
-Future migrations will require you to use the `--swap` option. 
+Future migrations will require you to use the `--swap` option.
+
+An alias that is already taken is reported as a **warning**, not an error, and
+does not fail the command: re-running `migrate:mappings` against an environment
+that has already been built is a normal thing to do. If the alias already points
+at the index being migrated there is nothing to report at all. Pointing an alias
+that is in use at a different index is what `index:swap` and `--swap` are for. 
