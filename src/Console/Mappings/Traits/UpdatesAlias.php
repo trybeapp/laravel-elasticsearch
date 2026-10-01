@@ -52,7 +52,7 @@ trait UpdatesAlias
 
     protected function updateAlias(
         ?string $index,
-        string $alias = null,
+        ?string $alias = null,
         ?string $currentIndex = null,
         bool $removeOldIndex = false
     ): void {
